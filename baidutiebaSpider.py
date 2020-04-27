@@ -16,7 +16,7 @@ def getHTMLText(url) :
 	except:
 		return ''
 
-def parserHTML(html, ulist, autor, recordTime):
+def parserHTML(html, ulist, autor, recordTime, link):
 
 	soup = BeautifulSoup(html,'html.parser')
 	# 搜索所有标题
@@ -32,10 +32,11 @@ def parserHTML(html, ulist, autor, recordTime):
 		# ^最后回复时间
 		# 在li 标签下寻找
 		recordTime.append(li.find('span', attrs={'class':'threadlist_reply_date pull_right j_reply_data'}).text.strip())
+		# 每个帖子的链接
+		# 在li 标签下寻找 需要分割
+		link.append('https://tieba.baidu.com' + li.find('a', attrs={'class':'j_th_tit'})['href'])
 
-
-
-def printText(ulist, autor, recordTime):
+def printText(ulist, autor, recordTime, link):
 
 	#写入文件
 	try :
@@ -47,6 +48,7 @@ def printText(ulist, autor, recordTime):
 		#	     2.添加 'prograss bar'增加用户体验
 		#	     3.调整文件观看舒适度 1.0v			  
 		#		 4.重新设置网站链接 无cookies 登录
+		# ver3 : 添加每个帖子的链接
 
 		# 文件所属长度
 		# 199
@@ -62,9 +64,8 @@ def printText(ulist, autor, recordTime):
 			sys.stdout.flush()
 
 			if i == file_len :
-				pass 
-			# handle.write(ulist[i] + '\t\t' + autor[i] + '\n')
-			handle.write('标题: {} \t 作者: {} \t 最后回复时间: {} \n'.format(ulist[i], autor[i], recordTime[i]))
+				pass 	
+			handle.write('标题: {} \t 链接: {} \t 作者: {} \t 最后回复时间: {} \n'.format(ulist[i], link[i], autor[i], recordTime[i]))
 
 		handle.close()
 
@@ -81,13 +82,15 @@ def main():
 	autorInfo = []
 	# 设定页面范围的所有话题的最后回复时间
 	lastTime = []
+	# 设定页面范围的所有帖子的链接
+	link = []
 
 	for i in range(4) :
 		url = url_star + '&pn=' + str(i*50)
 		html = getHTMLText(url)
-		parserHTML(html,titleInfo,autorInfo,lastTime)
+		parserHTML(html,titleInfo,autorInfo,lastTime,link)
 
-	printText(titleInfo, autorInfo,lastTime)
+	printText(titleInfo, autorInfo,lastTime, link)
 
 main()
 
