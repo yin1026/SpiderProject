@@ -7,7 +7,8 @@ import sys
 
 # 取得网页内容
 def getHTMLText(url):
-	user = {'user-agent':'Mozilla/5.0'}
+	# user = {'user-agent':'Mozilla/5.0'}
+	user = {'user-agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.129 Safari/537.36'}
 	try:
 		r = requests.get(url,headers = user)
 		r.raise_for_status()
@@ -23,7 +24,7 @@ def parserHTML(html,title,rating_num,rank,quote):
 
 	# 电影名字
 	Tages = soup.findAll('div', attrs = {'class':'hd'})
-	for tag in Tages: 
+	for tag in Tages:
 		title.append(tag.find('span', attrs = {'class':'title'}).text)
 	# 电影评分
 	ruting_num_tages = soup.findAll('div',attrs = {'class':'star'})
@@ -34,9 +35,19 @@ def parserHTML(html,title,rating_num,rank,quote):
 	for rank_tag in rank_tages :
 		rank.append(rank_tag.find('em').text)
 	# 电影短评
-	quote_tages = soup.findAll('p', attrs = {'class':'quote'})
-	for quote_tag in quote_tages:	
-		quote.append(quote_tag.find('span',attrs = {'class':'inq'}).text)
+	# 有没有短评的片段
+	# 加上意外处理 
+	# ex) Top 237 九品芝麻官
+	for infoTages in soup.findAll('div', attrs={'class':'info'}) :
+		quoteTag = infoTages.find('p', attrs = {'class':'quote'})
+		if quoteTag != None :
+			quote.append(quoteTag.find('span', attrs = {'class':'inq'}).text)
+		else :
+			quote.append('')
+
+	# quote_tages = soup.findAll('p', attrs = {'class':'quote'})
+	# for quote_tag in quote_tages:
+	# 	quote.append(quote_tag.find('span',attrs = {'class':'inq'}).text)
 
 
 def fileSys(title,rating_num,rank,quote):
@@ -62,9 +73,7 @@ def fileSys(title,rating_num,rank,quote):
 			if i == file_len :
 				pass
 			else :
-				# 有些电影没有评价 程序意外处理需要！！！
-				# 从搜索开始 except!
-				handle.write('排名: {} \t 电影名字: {} \t\t 评分: {} \t \n'.format(rank[i], title[i], rating_num[i]))
+				handle.write('排名: {} \t 电影名字: {} \t\t 评分: {} \t\t 短评: {}\n'.format(rank[i], title[i], rating_num[i], quote[i]))
 
 		handle.close()
 
@@ -85,7 +94,7 @@ def main():
 
 	while page <= 225 :
 		url = 'https://movie.douban.com/top250?start=' + str(page) + '&filter='
-		
+
 		html = getHTMLText(url)
 
 		parserHTML(html,title,rating_num,rank,quote)
